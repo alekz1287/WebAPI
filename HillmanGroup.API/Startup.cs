@@ -41,6 +41,11 @@ namespace HillmanGroup.API
             services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString)); 
 
             services.AddScoped<Services.ICityInfoRepository, Services.CityInfoRepository>();    //Scoped = created once per request
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info { Title = "FDE API", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -72,7 +77,12 @@ namespace HillmanGroup.API
 
             });
 
-
+            //Add the swagger UI documentation
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "FDE API V1");
+            });
         }
     }
 }
