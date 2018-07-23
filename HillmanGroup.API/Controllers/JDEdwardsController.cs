@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HillmanGroup.API.Controllers
 {
+    [Authorize]
     [Route("api/cities")]
     public class JDEdwardsController : Controller
     {

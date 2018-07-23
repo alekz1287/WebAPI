@@ -1,0 +1,20 @@
+﻿{
+  "openapi":  "3.0.0",
+  "swagger\": \"2.0\",": null,
+  "info": {
+    "title": "Simple API overview",
+    "version": "v2"
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": {
+    "BasicAuth": []
+  }
+} 

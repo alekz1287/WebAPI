@@ -6,6 +6,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using HillmanGroup.API.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
+using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore;
+using FluentValidation.AspNetCore;
 
 namespace HillmanGroup.API
 {
@@ -22,8 +27,15 @@ namespace HillmanGroup.API
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAuthentication(sharedOptions =>
+            {
+                sharedOptions.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddAzureAdBearer(options => Configuration.Bind("AzureAd", options));
+
             services.AddMvc()
-                .AddMvcOptions(o => o.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter()));
+                .AddMvcOptions(o => o.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter()))
+                .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Models.PointOfInterestForCreationDTO_Validator>());
             //.AddJsonOptions(o => //By default this changes property names to camelCase when returned as JSON
             //{
             //    if(o.SerializerSettings.ContractResolver != null) //This overrides the camelCase setting to preserve the capitalization as it appears in the model
@@ -37,14 +49,26 @@ namespace HillmanGroup.API
 #else
             services.AddTransient<Services.IMailService, Services.CloudMailService>();
 #endif
-            var connectionString = Configuration["ConnectionStrings:DefaultConnection"];    //Store this sensitive data in the WINDOWS ENVIRONMENT VARIABLES FOR PRODUCTION
+            var connectionString = Configuration["ConnectionStrings:AzureConnection"];    //Store this sensitive data in the WINDOWS ENVIRONMENT VARIABLES FOR PRODUCTION
             services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString)); 
 
             services.AddScoped<Services.ICityInfoRepository, Services.CityInfoRepository>();    //Scoped = created once per request
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info { Title = "FDE API", Version = "v1" });
+                c.SwaggerDoc("v1", new Info
+                {
+                    Title = "FDE API",
+                    Version = "v1",
+                    Description = "A simple example ASP.NET Core Web API",
+                    Contact = new Contact
+                    {
+                        Name = "Alex Kellerman",
+                        Email = string.Empty,
+                        Url = "alex.kellerman@pinnsg.com"
+                    },
+                });
+                c.AddFluentValidationRules();
             });
         }
 
@@ -63,7 +87,8 @@ namespace HillmanGroup.API
 
             cityInfoContext.EnsureSeedDataForContext();
             app.UseStatusCodePages();   //Return 200's, 300's, etc.
-            
+
+            //app.UseAuthentication();  //Comment to disable authorization
             app.UseMvc();
 
             AutoMapper.Mapper.Initialize(cfg =>
@@ -77,11 +102,15 @@ namespace HillmanGroup.API
 
             });
 
-            //Add the swagger UI documentation
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
+            // specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "FDE API V1");
+                c.RoutePrefix = string.Empty;
             });
         }
     }

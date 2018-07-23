@@ -6,9 +6,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
+using HillmanGroup.API.Models;
+using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HillmanGroup.API.Controllers
 {
+    //[Authorize]
     [Route("api/cities/")]
     public class PointsOfInterestController : Controller
     {
@@ -80,21 +84,17 @@ namespace HillmanGroup.API.Controllers
                 return BadRequest();
             }
 
-            if(pointOfInterest.Description == pointOfInterest.Name)
-            {
-                ModelState.AddModelError("Description", "The name and description must be different");
-            }
-
+            PointOfInterestForCreationDTO_Validator validator = new PointOfInterestForCreationDTO_Validator();
+            ValidationResult result = validator.Validate(pointOfInterest);
             //The users' input violates the validation rules on the Model
-            if(!ModelState.IsValid)
+            if (!result.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(result.ToString());
             }
 
-            
             if (!_cityInfoRepository.CityExists(cityId))
             {
-                return NotFound();
+                return NotFound($"cityId: {cityId} does not exist.");
             }
 
 
