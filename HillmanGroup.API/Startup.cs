@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore;
 using FluentValidation.AspNetCore;
+using System.Collections.Generic;
 
 namespace HillmanGroup.API
 {
@@ -36,21 +37,9 @@ namespace HillmanGroup.API
             services.AddMvc()
                 .AddMvcOptions(o => o.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter()))
                 .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Models.PointOfInterestForCreationDTO_Validator>());
-            //.AddJsonOptions(o => //By default this changes property names to camelCase when returned as JSON
-            //{
-            //    if(o.SerializerSettings.ContractResolver != null) //This overrides the camelCase setting to preserve the capitalization as it appears in the model
-            //    {
-            //        var castedResolver = o.SerializerSettings.ContractResolver as DefaultContractResolver;
-            //        castedResolver.NamingStrategy = null;
-            //    }
-            //});
-#if DEBUG
-            services.AddTransient<Services.IMailService, Services.LocalMailService>();
-#else
-            services.AddTransient<Services.IMailService, Services.CloudMailService>();
-#endif
+         
             var connectionString = Configuration["ConnectionStrings:AzureConnection"];    //Store this sensitive data in the WINDOWS ENVIRONMENT VARIABLES FOR PRODUCTION
-            services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString)); 
+            services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString));
 
             services.AddScoped<Services.ICityInfoRepository, Services.CityInfoRepository>();    //Scoped = created once per request
 
@@ -58,16 +47,31 @@ namespace HillmanGroup.API
             {
                 c.SwaggerDoc("v1", new Info
                 {
-                    Title = "FDE API",
+                    Title = "Hillman API",
                     Version = "v1",
-                    Description = "A simple example ASP.NET Core Web API",
+                    Description = "JDE to Concur and back",
                     Contact = new Contact
                     {
                         Name = "Alex Kellerman",
-                        Email = string.Empty,
-                        Url = "alex.kellerman@pinnsg.com"
+                        Email = "alex.kellerman@pinnsg.com"
                     },
                 });
+                // Define the OAuth2.0 scheme that's in use (i.e. Implicit Flow)
+                //c.AddSecurityDefinition("oauth2", new OAuth2Scheme
+                //{
+                //    Type = "oauth2",
+                //    Flow = "implicit",
+                //    AuthorizationUrl = "http://petstore.swagger.io/oauth/dialog",
+                //    Scopes = new Dictionary<string, string>
+                //    {
+                //        { "readAccess", "Access read operations" },
+                //        { "writeAccess", "Access write operations" }
+                //    }
+                //});
+                //c.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>>
+                //{
+                //    { "oauth2", new[] { "readAccess", "writeAccess" } }
+                //});
                 c.AddFluentValidationRules();
             });
         }
@@ -77,15 +81,13 @@ namespace HillmanGroup.API
         {
             loggerFactory.AddConsole();
             loggerFactory.AddDebug();
-            //loggerFactory.AddProvider(new NLog.Extensions.Logging.NLogLoggerProvider());
-            //loggerFactory.AddNLog();
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            cityInfoContext.EnsureSeedDataForContext();
+            //cityInfoContext.EnsureSeedDataForContext();
             app.UseStatusCodePages();   //Return 200's, 300's, etc.
 
             //app.UseAuthentication();  //Comment to disable authorization
@@ -109,7 +111,7 @@ namespace HillmanGroup.API
             // specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "FDE API V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Hillman API V1");
                 c.RoutePrefix = string.Empty;
             });
         }
