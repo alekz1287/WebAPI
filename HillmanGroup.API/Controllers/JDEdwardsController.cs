@@ -6,68 +6,65 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using System.Data;
+using Novell.Directory.Ldap;
+using HillmanGroup.API.Models.Concur;
+using HillmanGroup.API.Models.Shared;
+using HillmanGroup.API.Models.Concur.FTP;
 
 namespace HillmanGroup.API.Controllers
 {
     
-    [Route("api/cities")]
+    [Route("api/[controller]")]
+    [ApiController]
     public class JDEdwardsController : Controller
     {
-        private Services.ICityInfoRepository _cityRepository;
+        private Services.IJDEdwardsRepository _jdeRepository;
 
-        public JDEdwardsController(Services.ICityInfoRepository cityRepository)
+        public JDEdwardsController(Services.IJDEdwardsRepository jdeRepository)
         {
-            _cityRepository = cityRepository;
+            _jdeRepository = jdeRepository;
         }
-
-
-        [HttpGet("/F0101")]
-        public IActionResult GetF0101(int numberOfRows = 2)
+        
+        /// <summary>
+        /// Retrieves employees from JDEdwards. 
+        /// </summary>
+        /// <param name="numberOfRows">The number of records to return. Negative numbers return all records.</param>
+        /// <returns></returns>
+        [HttpGet("Employees/{numberOfRows}")]
+        [ProducesResponseType(typeof(ICollection<Employee>), 200)]
+        [ProducesResponseType(typeof(string), 500)]
+        public IActionResult GetEmployeesCount(int numberOfRows = -1)
         {
             try
             {
-                HillmanGroup.API.HillpyEntities.HILLPYContext repo = new HillmanGroup.API.HillpyEntities.HILLPYContext();
-                var list = repo.F0101.Take(numberOfRows).ToList();
-
-                return Ok(list);
-            }catch(Exception ex)
+                return Ok(_jdeRepository.GetEmployees(numberOfRows));
+            }
+            catch (Exception ex)
             {
-                return StatusCode(500, ex);
+                return StatusCode(500, ex.Message);
             }
         }
 
-
-        //[Authorize]
-        //[HttpGet()]
-        //public IActionResult GetCities()
-        //{
-        //    var cityEntities = _cityRepository.GetCities();            
-        //    var results = Mapper.Map<IEnumerable<Models.CityWithoutPointsOfInterestDTO>>(cityEntities);//Tell Automapper to map each parameter to the matching DTO
-
-
-        //    return Ok(results);
-        //}
-
-        //[HttpGet("{id}")]
-        //public IActionResult GetCity(int id, bool includePointsOfInterest = false)
-        //{
-        //    var cityEntity = _cityRepository.GetCity(id, includePointsOfInterest);
-        //    if(cityEntity == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    if (includePointsOfInterest)
-        //    {
-        //        var cityResult = Mapper.Map<Models.CityDTO>(cityEntity);
-        //        return Ok(cityResult);
-        //    }
-        //    else
-        //    {
-        //        var cityResult = Mapper.Map<Models.CityWithoutPointsOfInterestDTO>(cityEntity);
-        //        return Ok(cityResult);
-        //    }            
-        //}
+        /// <summary>
+        /// Inserts transactions into the Enterprises One zTable
+        /// </summary>
+        /// <param name="saes"></param>
+        /// <returns></returns>
+        [HttpPost("VoucherTransactions")]
+        [ProducesResponseType(typeof(void), 200)]
+        [ProducesResponseType(typeof(string), 500)]
+        public IActionResult InsertExpenseData([FromBody] ICollection<StandardAccountingExtract> saes)
+        {
+            try
+            {
+                _jdeRepository.InsertTransactions(saes);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }
 

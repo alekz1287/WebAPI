@@ -1,0 +1,55 @@
+﻿@model HillmanMVC2.Models.ViewModels.HomeViewModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+
+<div class="row">
+    <div class="col-3">
+        <div class="card text-white bg-dark mb-3">
+            <div class="card-header">Organizations</div>
+            <div class="card-body">
+                <select id="ddlOrganization" asp-for="SelectedOrganization" asp-items="@Model.OrganizationOptions"></select>
+            </div>
+        </div>
+    </div>
+    <div class="col-9">
+        <div class="card text-white bg-dark mb-3">
+            <div class="card-header">JDEdwards Records: <label id="lblRecordCount"></label></div>
+            <div class="card-body">
+                <textarea id="txtJDEdwards" class="form-control" asp-for="EmployeeData" rows="30"></textarea>
+            </div>
+        </div>
+        <div class="card text-white bg-dark mb-3">
+            <div class="card-header">Concur</div>
+            <div class="card-body">
+                <textarea class="form-control">No API &#9785;</textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        $(function () {
+            //Onchange of the Organizations drop down, pull a new list of employees
+            $('#ddlOrganization').on('change', function () {
+                getEmployeesByOrganization($(this).val());
+            });
+
+            //Call this function on page load to get the initial data
+            getEmployeesByOrganization($('#ddlOrganization').val());
+        });
+
+        //Retrieves employee data for the selected organization and displays it in the textarea
+        function getEmployeesByOrganization(selectedOrg) {
+            $.get("GetEmployeesByOrganization/" + selectedOrg, function (data) {
+                $('#lblRecordCount').html(Object.keys(data).length);
+                $('#txtJDEdwards').html(JSON.stringify(data));
+            });
+        }
+
+    </script>
+}
