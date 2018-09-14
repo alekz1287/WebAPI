@@ -28,7 +28,7 @@ namespace HillmanGroup.API
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            string mode = "Production";
+            string mode = "Dev";// "Production"; - NOT READY FOR PRIME TIME!
 #if DEBUG
             mode = "Dev";
 #endif
